@@ -1,0 +1,29 @@
+spring:
+  application:
+    name: hireboost
+  datasource:
+    url: jdbc:postgresql://localhost:5432/hireboost
+    username: postgres
+    password: password
+  jpa:
+    hibernate:
+      ddl-auto: update
+
+server:
+  port: 8080
+
+temporal:
+  host: localhost
+  port: 7233
+
+openai:
+  api-key: your_openai_api_key
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, metrics, beans, env, loggers
+  endpoint:
+    health:
+      show-details: always

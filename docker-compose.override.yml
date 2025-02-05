@@ -1,0 +1,73 @@
+version: "3.8"
+
+services:
+  # ------------------ PostgreSQL for HireBoost ------------------
+  hireboost-db:
+    extends:
+      file: ./docker/docker-compose-hireboost-app.yaml
+      service: hireboost-db
+
+  # ------------------ Adminer Database Viewer for HireBoost ------------------
+#  adminer:
+#    extends:
+#      file: ./docker/docker-compose-hireboost-app.yaml
+#      service: adminer
+
+  # ------------------ HireBoost Application ------------------
+  hireboost-app:
+    extends:
+      file: ./docker/docker-compose-hireboost-app.yaml
+      service: hireboost-app
+
+  # ------------------ PostgreSQL for Temporal ------------------
+  temporal-db:
+    extends:
+      file: ./docker/docker-compose-temporal-infra.yaml
+      service: postgresql
+
+  # ------------------ Elasticsearch for Temporal ------------------
+  elasticsearch:
+    extends:
+      file: ./docker/docker-compose-temporal-infra.yaml
+      service: elasticsearch
+
+  # ------------------ Temporal Workflow Engine ------------------
+  temporal:
+    extends:
+      file: ./docker/docker-compose-temporal-infra.yaml
+      service: temporal
+
+  # ------------------ Temporal Admin Tools ------------------
+  temporal-admin-tools:
+    extends:
+      file: ./docker/docker-compose-temporal-infra.yaml
+      service: temporal-admin-tools
+
+  # ------------------ Temporal UI ------------------
+  temporal-ui:
+    extends:
+      file: ./docker/docker-compose-temporal-infra.yaml
+      service: temporal-ui
+
+  # ------------------ Database Viewer (pgAdmin for Both DBs) ------------------
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: db-viewer
+    restart: unless-stopped
+    ports:
+      - "8082:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@hireboost.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    depends_on:
+      - hireboost-db
+      - temporal-db
+    networks:
+      - temporal-network
+      - hireboost-network
+
+networks:
+  temporal-network:
+    driver: bridge
+  hireboost-network:
+    driver: bridge

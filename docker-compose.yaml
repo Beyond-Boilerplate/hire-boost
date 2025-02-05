@@ -1,0 +1,7 @@
+version: "3.8"
+
+services:
+  # Proxy service to ensure main compose is detected
+  proxy:
+    image: alpine
+    command: ["echo", "Root docker-compose.yml is just a placeholder. Override adds the actual services!"]
