@@ -3,7 +3,7 @@ version: '3.8'
 services:
   # ------------------ PostgreSQL for HireBoost ------------------
   hireboost-db:
-    image: postgres:15
+    image: postgres:13
     container_name: hireboost-db
     ports:
       - "5434:5432"
@@ -13,9 +13,11 @@ services:
       POSTGRES_PASSWORD: password
       POSTGRES_DB: hireboost
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD", "pg_isready", "-U", "postgres"]
       interval: 5s
       retries: 5
+    networks:
+      - hireboost-network
 
   # ------------------ HireBoost Application ------------------
   hireboost-app:
@@ -27,10 +29,11 @@ services:
       - "8081:8080"
     restart: unless-stopped
     environment:
+      SPRING_PROFILES_ACTIVE: default
       SPRING_DATASOURCE_URL: jdbc:postgresql://hireboost-db:5432/hireboost
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: password
-      TEMPORAL_SERVICE_ADDRESS: temporal:7233
+      TEMPORAL_SERVICE_ADDRESS: localhost:7233  # 🔥 Ensure correct connection
     depends_on:
       hireboost-db:
         condition: service_healthy
@@ -39,8 +42,40 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - hireboost-network
+      - temporal-network
 
-
-volumes:
-  hireboost-db-data:
-    driver: local
+  # ------------------ HireBoost Worker ------------------
+  hireboost-worker:
+    build:
+      context: ../
+      dockerfile: Dockerfile
+    container_name: hireboost-worker
+    ports:
+      - "8083:8083"
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: linkedin-post-worker
+      SPRING_DATASOURCE_URL: jdbc:postgresql://hireboost-db:5432/hireboost
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: password
+      TEMPORAL_SERVICE_ADDRESS: localhost:7233  # 🔥 Ensure correct connection
+    depends_on:
+      hireboost-db:
+        condition: service_healthy
+      temporal:
+        condition: service_started
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8080/actuator/health" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - hireboost-network
+      - temporal-network
+networks:
+  hireboost-network:
+    driver: bridge
+  temporal-network:
+    driver: bridge

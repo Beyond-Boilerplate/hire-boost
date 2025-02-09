@@ -1,0 +1,13 @@
+# LinkedIn Post Worker profile
+spring:
+  config:
+    activate:
+      on-profile: linkedin-post-worker
+
+server:
+  port: 8083  # Keeps a separate port for health checks if needed
+
+temporal:
+  workers:
+    linkedinPostWorker:
+      taskQueue: LinkedInPostQueue

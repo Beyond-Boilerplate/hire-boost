@@ -5,3 +5,7 @@ services:
   proxy:
     image: alpine
     command: ["echo", "Root docker-compose.yml is just a placeholder. Override adds the actual services!"]
+
+networks:
+  temporal-network:
+    driver: bridge

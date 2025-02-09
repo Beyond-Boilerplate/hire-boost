@@ -1,0 +1,26 @@
+{
+  "Servers": {
+    "1": {
+      "Name": "HireBoost DB",
+      "Group": "Databases",
+      "Host": "hireboost-db",
+      "Port": 5432,
+      "MaintenanceDB": "hireboost",
+      "Username": "postgres",
+      "Password": "password",
+      "SSLMode": "prefer",
+      "SavePassword": true
+    },
+    "2": {
+      "Name": "Temporal DB",
+      "Group": "Databases",
+      "Host": "temporal-db",
+      "Port": 5432,
+      "MaintenanceDB": "temporal",
+      "Username": "temporal",
+      "Password": "temporal",
+      "SSLMode": "prefer",
+      "SavePassword": true
+    }
+  }
+}

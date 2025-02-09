@@ -42,3 +42,8 @@ dependencies {
 tasks.named('test') {
 	useJUnitPlatform()
 }
+
+springBoot {
+	mainClass.set('com.sardul3.hireboost.HireboostApplication')
+}
+

@@ -6,65 +6,77 @@ services:
     extends:
       file: ./docker/docker-compose-hireboost-app.yaml
       service: hireboost-db
-
-  # ------------------ Adminer Database Viewer for HireBoost ------------------
-#  adminer:
-#    extends:
-#      file: ./docker/docker-compose-hireboost-app.yaml
-#      service: adminer
+    networks:
+      - hireboost-network
 
   # ------------------ HireBoost Application ------------------
   hireboost-app:
     extends:
       file: ./docker/docker-compose-hireboost-app.yaml
       service: hireboost-app
+    networks:
+      - hireboost-network
+      - temporal-network
+  hireboost-worker:
+    extends:
+      file: ./docker/docker-compose-hireboost-app.yaml
+      service: hireboost-worker
+    networks:
+      - hireboost-network
+      - temporal-network
 
   # ------------------ PostgreSQL for Temporal ------------------
-  temporal-db:
-    extends:
-      file: ./docker/docker-compose-temporal-infra.yaml
-      service: postgresql
+#  temporal-db:
+#    extends:
+#      file: ./docker/docker-compose-temporal-infra.yaml
+#      service: postgresql
 
   # ------------------ Elasticsearch for Temporal ------------------
-  elasticsearch:
-    extends:
-      file: ./docker/docker-compose-temporal-infra.yaml
-      service: elasticsearch
+#  elasticsearch:
+#    extends:
+#      file: ./docker/docker-compose-temporal-infra.yaml
+#      service: elasticsearch
 
   # ------------------ Temporal Workflow Engine ------------------
-  temporal:
-    extends:
-      file: ./docker/docker-compose-temporal-infra.yaml
-      service: temporal
+#  temporal:
+#    extends:
+#      file: ./docker/docker-compose-temporal-infra.yaml
+#      service: temporal
+#    networks:
+#      - temporal-network
 
   # ------------------ Temporal Admin Tools ------------------
-  temporal-admin-tools:
-    extends:
-      file: ./docker/docker-compose-temporal-infra.yaml
-      service: temporal-admin-tools
+#  temporal-admin-tools:
+#    extends:
+#      file: ./docker/docker-compose-temporal-infra.yaml
+#      service: temporal-admin-tools
+#    networks:
+#      - temporal-network
 
   # ------------------ Temporal UI ------------------
-  temporal-ui:
-    extends:
-      file: ./docker/docker-compose-temporal-infra.yaml
-      service: temporal-ui
+#  temporal-ui:
+#    extends:
+#      file: ./docker/docker-compose-temporal-infra.yaml
+#      service: temporal-ui
+#    networks:
+#      - temporal-network
 
   # ------------------ Database Viewer (pgAdmin for Both DBs) ------------------
-  pgadmin:
-    image: dpage/pgadmin4
-    container_name: db-viewer
-    restart: unless-stopped
-    ports:
-      - "8082:80"
-    environment:
-      PGADMIN_DEFAULT_EMAIL: admin@hireboost.com
-      PGADMIN_DEFAULT_PASSWORD: admin
-    depends_on:
-      - hireboost-db
-      - temporal-db
-    networks:
-      - temporal-network
-      - hireboost-network
+#  pgadmin:
+#    image: dpage/pgadmin4
+#    container_name: db-viewer
+#    restart: unless-stopped
+#    ports:
+#      - "8082:80"
+#    environment:
+#      PGADMIN_DEFAULT_EMAIL: admin@hireboost.com
+#      PGADMIN_DEFAULT_PASSWORD: admin
+#    depends_on:
+#      - hireboost-db
+#      - temporal-db
+#    networks:
+#      - temporal-network
+#      - hireboost-network
 
 networks:
   temporal-network:
