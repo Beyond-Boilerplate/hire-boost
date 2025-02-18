@@ -2,7 +2,7 @@ spring:
   application:
     name: hireboost
   datasource:
-    url: jdbc:postgresql://hireboost-db:5432/hireboost
+    url: jdbc:postgresql://localhost:5432/hireboost
     username: postgres
     password: password
     driver-class-name: org.postgresql.Driver
@@ -12,32 +12,140 @@ spring:
       ddl-auto: update
     show-sql: true
 
-server:
-  port: 8081
-
-temporal:
-  service:
-    address: temporal:7233
-
 openai:
-  api-key: ${OPENAI_API_KEY:your_openai_api_key}
+  api:
+    key: ${OPENAI_API_KEY:your_openai_api_key}
+    url: https://api.openai.com/v1/chat/completions
+stackoverflow:
+  key: ${STACK_OVERFLOW_API_KEY:your_stack_exchance_key}
 
 management:
   endpoints:
     web:
       exposure:
-        include: health, info, metrics, beans, env, loggers
+        include: health, info, metrics, beans, env, loggers, refresh
   endpoint:
     health:
       show-details: always
 
----
-# Default profile (Main API)
-spring:
-  config:
-    activate:
-      on-profile: default
+temporal-config:
+  server: ${TEMPORAL_SERVER:localhost:7233}
+  namespace: hireboost
+  workflows:
+    liPostWorkflow:
+      prefix: "LI-POST" # IN_USE
+      keyGenerationStrategy: "UUID" # IN_USE
+      versions:
+        v1:
+          executionTimeout: 60s
+          runTimeout: 7200s
+          taskQueue: "LI_POST_QUEUE"
+    liProfileVisitWorkflow:
+      prefix: "LI-PROFILE-VISIT" # IN_USE
+      keyGenerationStrategy: "UUID" # IN_USE
+      versions:
+        default:
+          executionTimeout: 60s
+          runTimeout: 7200s
+          taskQueue: "LI_PROFILE_VISIT_QUEUE"
 
-server:
-  port: 8081
+  activities:
+    liPostActivities:
+      versions:
+        default:
+          scheduleToCloseTimeout: 300s
+          startToCloseTimeout: 180s
+          retry:
+            initialInterval: 1s
+            maxAttempts: 3
+            backoffCoefficient: 2.0
+
+  workers:
+    liPostWorker:
+      taskQueue: "LI_POST_QUEUE" # IN_USE
+      workflows:
+        - liPostWorkflow
+      activities:
+        - liPostActivities
+    liProfileVisitWorker:
+      taskQueue: "LI_PROFILE_VISIT_QUEUE" # IN_USE
+      workflows:
+        - liProfileVisitWorkflow
+      activities:
+        - liProfileVisitActivities
+
+  current-versions:
+    workflows:
+      liPostWorkflow: v1 # IN_USE
+      liProfileVisitWorkflow: default # IN_USE
+    activities:
+      liPostActivities: v1
+    workers:
+      liPostWorker: v1
+      liProfileVisitWorker: default
+
+selenium:
+  headless: true
+  chromeDriverPath: "/opt/homebrew/bin/chromedriver"
+  userAgents:
+    - "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36"
+    - "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36"
+    - "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36"
+  proxies:
+    - "https://proxy1:port"
+    - "https://proxy2:port"
+    - "https://proxy3:port"
+
+profile-visit:
+  recruiter-only: true
+
+linkedin:
+  base-url: "https://www.linkedin.com"
+  login-url: "https://www.linkedin.com/login"
+  search-url: "https://www.linkedin.com/search/results/people/?keywords=technology&sortBy=TRENDING"
+  wait-time-seconds: 15
+  scroll-count: 3
+  min-profile-index: 8
+  max-profile-index: 18
+  recruiter-url: "https://www.linkedin.com/search/results/people/?activelyHiringForJobTitles=%5B%229%22%2C%2239%22%2C%2225201%22%2C%2225194%22%5D&geoUrn=%5B%22103644278%22%5D&keywords=Spring%20Boot%20developer&origin=FACETED_SEARCH"
+  search-urls:
+    # 🔥 High-Engagement Professionals
+    - "https://www.linkedin.com/search/results/people/?keywords=software+developer+OR+software+engineer+active+poster&sortBy=TRENDING"
+    - "https://www.linkedin.com/search/results/people/?keywords=tech+enthusiast+OR+community+leader+OR+public+speaker&sortBy=TRENDING"
+    - "https://www.linkedin.com/search/results/people/?keywords=%22LinkedIn+Top+Voice%22+software+engineering&sortBy=TRENDING"
+    - "https://www.linkedin.com/search/results/people/?keywords=blogger+technical+writer+software&sortBy=TRENDING"
+    - "https://www.linkedin.com/search/results/people/?keywords=open+source+contributor+developer+engagement&sortBy=TRENDING"
+
+    # 🚀 Engineering Managers & Software Architects
+    - "https://www.linkedin.com/search/results/people/?keywords=engineering+manager+senior+software+lead&sortBy=TRENDING"
+    - "https://www.linkedin.com/search/results/people/?keywords=software+architect+enterprise+solutions&sortBy=TRENDING"
+    - "https://www.linkedin.com/search/results/people/?keywords=CTO+VP+of+Engineering+software&sortBy=TRENDING"
+    - "https://www.linkedin.com/search/results/people/?keywords=tech+lead+principal+engineer+LinkedIn&sortBy=TRENDING"
+    - "https://www.linkedin.com/search/results/people/?keywords=startup+founder+technical+lead+engineering&sortBy=TRENDING"
+
+    # 🌟 Tech Influencers & Technical Content Creators
+    - "https://www.linkedin.com/search/results/people/?keywords=tech+influencer+software+engineering&sortBy=TRENDING"
+    - "https://www.linkedin.com/search/results/people/?keywords=software+developer+YouTuber+content+creator&sortBy=TRENDING"
+    - "https://www.linkedin.com/search/results/people/?keywords=newsletter+blogger+technical+content+creator&sortBy=TRENDING"
+    - "https://www.linkedin.com/search/results/people/?keywords=technical+writer+developer+relations+content&sortBy=TRENDING"
+    - "https://www.linkedin.com/search/results/people/?keywords=clean+code+best+practices+developer+evangelist&sortBy=TRENDING"
+
+    # 💻 Spring Boot & Java Experts
+    - "https://www.linkedin.com/search/results/people/?keywords=Java+Spring+Boot+developer+backend+engineer&sortBy=TRENDING"
+    - "https://www.linkedin.com/search/results/people/?keywords=Spring+Boot+Microservices+architect+expert&sortBy=TRENDING"
+    - "https://www.linkedin.com/search/results/people/?keywords=Java+Champion+Oracle+Certified+Expert&sortBy=TRENDING"
+    - "https://www.linkedin.com/search/results/people/?keywords=Java+performance+tuning+expert+developer&sortBy=TRENDING"
+    - "https://www.linkedin.com/search/results/people/?keywords=Spring+Boot+REST+API+developer&sortBy=TRENDING"
+
+    - "https://www.linkedin.com/search/results/people/?keywords=AI+ML+engineer+data+scientist&sortBy=TRENDING"
+    - "https://www.linkedin.com/search/results/people/?keywords=cloud+architect+devops+engineer&sortBy=TRENDING"
+    - "https://www.linkedin.com/search/results/people/?keywords=frontend+developer+react+vue&sortBy=TRENDING"
+    - "https://www.linkedin.com/search/results/people/?keywords=cybersecurity+expert+ethical+hacker&sortBy=TRENDING"
+    - "https://www.linkedin.com/search/results/people/?keywords=blockchain+developer+crypto+expert&sortBy=TRENDING"
+    - "https://www.linkedin.com/search/results/people/?keywords=game+developer+unity+unreal+engine&sortBy=TRENDING"
+    - "https://www.linkedin.com/search/results/people/?keywords=UI+UX+designer+product+design&sortBy=TRENDING"
+    - "https://www.linkedin.com/search/results/people/?keywords=mobile+developer+ios+android&sortBy=TRENDING"
+    - "https://www.linkedin.com/search/results/people/?keywords=AI+researcher+deep+learning&sortBy=TRENDING"
+    - "https://www.linkedin.com/search/results/people/?keywords=quantitative+analyst+fintech+AI&sortBy=TRENDING"
+    - "https://www.linkedin.com/search/results/people/?activelyHiringForJobTitles=%5B%229%22%2C%2239%22%2C%2225201%22%2C%2225194%22%5D&geoUrn=%5B%22103644278%22%5D&keywords=Spring%20Boot%20developer&origin=FACETED_SEARCH"
 

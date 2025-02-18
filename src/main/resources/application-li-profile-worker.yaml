@@ -1,0 +1,13 @@
+# LinkedIn Profile Worker profile
+spring:
+  config:
+    activate:
+      on-profile: linkedin-profile-worker
+
+server:
+  port: 8084  # Correctly overrides the default profile's port
+
+temporal:
+  workers:
+    linkedinPostWorker:
+      taskQueue: li-profile-visit-queue

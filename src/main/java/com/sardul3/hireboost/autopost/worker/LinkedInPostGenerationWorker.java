@@ -1,13 +1,12 @@
-package com.sardul3.hireboost.autopost.temporal.workers;
+package com.sardul3.hireboost.autopost.worker;
 
-import com.sardul3.hireboost.autopost.temporal.activities.LinkedInPostPublishActivity;
-import com.sardul3.hireboost.autopost.temporal.workflow.LinkedInPostPublishWorkflow;
-import io.temporal.client.WorkflowClient;
-import io.temporal.serviceclient.WorkflowServiceStubs;
+import com.sardul3.hireboost.autopost.activity.LinkedInPostPublishActivity;
+import com.sardul3.hireboost.temporal.config.TemporalConfigProperties;
+import com.sardul3.hireboost.temporal.config.TemporalConstants;
+import com.sardul3.hireboost.autopost.workflow.LinkedInPostPublishWorkflow;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Profile;
 
 import io.temporal.worker.Worker;
@@ -21,7 +20,9 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class LinkedInPostGenerationWorker implements CommandLineRunner {
 
+    private final TemporalConfigProperties temporalConfigProperties;
     private final LinkedInPostPublishActivity linkedInPostPublishActivity;
+    private final WorkerFactory workerFactory;
 
     public static void main(String[] args) {
         SpringApplication.run(LinkedInPostGenerationWorker.class, args);
@@ -29,24 +30,22 @@ public class LinkedInPostGenerationWorker implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        System.out.println("Starting Temporal Worker");
+        String taskQueue = temporalConfigProperties.getWorkers()
+                .get(TemporalConstants.Workers.LI_POST_WORKER).getTaskQueue();
 
-        // Connect to Temporal Service
-        WorkflowServiceStubs service = WorkflowServiceStubs.newInstance();
-        WorkflowClient client = WorkflowClient.newInstance(service);
-        WorkerFactory factory = WorkerFactory.newInstance(client);
+        Worker worker = workerFactory.newWorker(taskQueue);
 
-        // Register Worker for the Task Queue
-        Worker worker = factory.newWorker("LinkedInPostQueue");
-
-        // Register Workflow Implementations
+        // Register workflow and activity implementations
         worker.registerWorkflowImplementationTypes(LinkedInPostPublishWorkflow.class);
-
-        // Register Activities
         worker.registerActivitiesImplementations(linkedInPostPublishActivity);
 
-        // Start Worker
-        factory.start();
+        log.info("Starting LI Post Create Worker...");
+
+        // Start polling for tasks
+        workerFactory.start();
+
+        log.info("LI Post Create Worker started successfully.");
+
     }
 }
 

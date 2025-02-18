@@ -1,0 +1,6 @@
+spring:
+  config:
+    activate:
+      on-profile: "api"
+server:
+  port: 8081

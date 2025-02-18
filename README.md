@@ -109,6 +109,9 @@ docker logs temporal
 
 ---
 
+./gradlew bootRun --args='--spring.profiles.active=api'
+./gradlew bootRun --args='--spring.profiles.active=linkedin-post-worker'
+
 ## ✨ **Contributing**
 1. **Fork the repository**
 2. **Create a new feature branch** (`git checkout -b feature-name`)
